@@ -46,5 +46,5 @@ The application is fully responsive. Mobile optimizations include collapsing com
 ---
 
 <div align="center">
-  <i>Designed and coded with 🖤 by Pablo García López</i>
+  <i>Designed and coded by Pablo García López</i>
 </div>
