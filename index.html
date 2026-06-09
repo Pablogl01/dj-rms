@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DJ RAMOS | Architecture of Sound</title>
+    <link rel="icon" type="image/png" href="favicon.png">
+    <meta name="description" content="Portfolio of DJ RAMOS. Premium sound architecture and raw narrative.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;900&family=Syncopate:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="custom-cursor" id="custom-cursor"></div>
+
+    <nav class="main-nav">
+        <div class="nav-brand">R M S</div>
+        <div class="nav-controls">
+            <div class="custom-lang-selector" id="custom-lang-selector">
+                <div class="current-lang" id="current-lang">ES</div>
+                <ul class="lang-options" id="lang-options">
+                    <li data-value="es">ES</li>
+                    <li data-value="ca">CA</li>
+                    <li data-value="en">EN</li>
+                    <li data-value="fr">FR</li>
+                    <li data-value="pt">PT</li>
+                    <li data-value="de">DE</li>
+                </ul>
+            </div>
+            <button class="nav-toggle" id="nav-toggle">
+                <span class="line"></span>
+                <span class="line"></span>
+            </button>
+        </div>
+    </nav>
+
+    <div class="nav-overlay" id="nav-overlay">
+        <ul class="nav-links">
+            <li><a href="#hero" class="hover-glitch" data-i18n="nav_home" data-text="INICIO">INICIO</a></li>
+            <li><a href="#story" class="hover-glitch" data-i18n="nav_narrative" data-text="NARRATIVA">NARRATIVA</a></li>
+            <li><a href="#booking" class="hover-glitch" data-i18n="nav_booking" data-text="CONTACTAR">CONTACTAR</a></li>
+        </ul>
+    </div>
+
+    <main class="smooth-scroll-wrapper">
+        <!-- Hero Section -->
+        <section id="hero" class="hero-section">
+            <div class="hero-bg" style="background-image: url('principal_bkg.png');"></div>
+            <div class="hero-content">
+                <h1 class="massive-title parallax-el" data-speed="0.2">DJ RAMOS</h1>
+                <p class="hero-subtitle" data-i18n="hero_subtitle">SONIDO EN BRUTO</p>
+            </div>
+            <div class="scroll-indicator" data-i18n="hero_scroll">DESLIZA</div>
+        </section>
+
+        <!-- Narrativa Cruda Section -->
+        <section id="story" class="story-section">
+            <div class="story-container">
+                <div class="sticky-text">
+                    <h2 class="section-title" data-i18n="story_title">LA ESENCIA</h2>
+                    <p class="body-text reveal-text" data-i18n="story_p1">
+                        House, Electrónica, Techno y Reggaetón. Sin adornos ni distracciones. DJ RAMOS busca la frecuencia exacta donde estos ritmos conectan de forma natural y directa.
+                    </p>
+                    <p class="body-text reveal-text delay-1" data-i18n="story_p2">
+                        Bajos profundos y sonido analógico. Una propuesta centrada en lo esencial, donde cada elemento tiene su espacio y el ritmo marca el camino.
+                    </p>
+                    
+                    <div class="tracklist reveal-text delay-1">
+                        <div class="track hover-distortion" data-src="remix1.mp3">
+                            <button class="play-btn" data-text="[ PLAY ]">[ PLAY ]</button>
+                            <span class="track-name">REMIX 01 // RAW ENERGY</span>
+                        </div>
+                        <div class="track hover-distortion" data-src="remix2.mp3">
+                            <button class="play-btn" data-text="[ PLAY ]">[ PLAY ]</button>
+                            <span class="track-name">REMIX 02 // SUBTERRANEAN</span>
+                        </div>
+                        <div class="track hover-distortion" data-src="remix3.mp3">
+                            <button class="play-btn" data-text="[ PLAY ]">[ PLAY ]</button>
+                            <span class="track-name">REMIX 03 // CLUB ANTHEM</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="asymmetric-gallery">
+                    <div class="gallery-item parallax-el" data-speed="0.1">
+                        <div class="placeholder-img" style="background-image: url('gallery1.png'); background-color: #1A1A1C;"></div>
+                    </div>
+                    <div class="gallery-item parallax-el" data-speed="0.3">
+                        <div class="placeholder-img" style="background-image: url('gallery2.png'); background-color: #2E2E32;"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="booking" class="booking-section">
+            <h1 class="massive-title hover-distortion" data-i18n="contact_title">CONTACTO</h1>
+            <div class="contact-form-container reveal-text">
+                <form id="contact-form" class="brutalist-form" novalidate>
+                    <div class="form-group">
+                        <input type="text" id="name" data-i18n-placeholder="contact_name" placeholder="NOMBRE" required>
+                    </div>
+                    <div class="form-group">
+                        <input type="email" id="email" data-i18n-placeholder="contact_email" placeholder="CORREO" required>
+                    </div>
+                    <div class="form-group">
+                        <textarea id="message" data-i18n-placeholder="contact_message" placeholder="MENSAJE..." rows="4" required></textarea>
+                    </div>
+                    <button type="submit" class="cta-link hover-glitch" data-i18n="contact_send" data-text="ENVIAR">ENVIAR</button>
+                    <div id="form-feedback" class="form-feedback"></div>
+                </form>
+            </div>
+            
+            <div class="contact-links" style="margin-top: 4rem; display: flex; flex-direction: column; gap: 1rem; align-items: center;">
+                <a href="mailto:Infernal750@gmail.com" class="cta-link hover-distortion" style="margin-top: 0; border: none; font-size: 1rem;">Infernal750@gmail.com</a>
+                <a href="tel:+34672096651" class="cta-link hover-distortion" style="margin-top: 0; border: none; font-size: 1rem;">+34 672 09 66 51</a>
+            </div>
+        </section>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>
