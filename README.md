@@ -5,7 +5,7 @@
     <strong>A high-performance, brutalist-inspired portfolio built with Vanilla JS, CSS3, and Serverless Architecture.</strong>
   </p>
   <p>
-    <a href="https://djramos.com">View Live Site</a>
+    <a href="https://djramos.vercel.app">View Live Site</a>
   </p>
 </div>
 
