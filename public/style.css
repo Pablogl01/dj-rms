@@ -439,7 +439,8 @@ html, body {
     margin-bottom: 5rem;
 }
 
-.reviews-title {
+.reviews-title,
+.live-title {
     font-family: var(--font-heading);
     font-weight: 900;
     font-size: clamp(4rem, 12vw, 10rem);
@@ -849,6 +850,120 @@ html, body {
 }
 
 /* Touch devices: disable custom cursor */
+/* Live Section (vídeos verticales) */
+.live-section {
+    padding: 10rem 0 8rem 0;
+    background-color: var(--bg-main);
+    overflow: hidden;
+    position: relative;
+}
+
+.live-header {
+    padding: 0 10vw;
+    margin-bottom: 4rem;
+}
+
+.live-strip {
+    display: flex;
+    align-items: flex-start;
+    gap: 2rem;
+    padding: 0 10vw 1rem 10vw;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: 10vw;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+}
+.live-strip::-webkit-scrollbar {
+    display: none;
+}
+
+.live-card {
+    position: relative;
+    flex: 0 0 clamp(200px, 22vw, 300px);
+    aspect-ratio: 9 / 16;
+    scroll-snap-align: start;
+    background-color: var(--accent-1);
+    border: 1px solid var(--accent-2);
+    overflow: hidden;
+    cursor: none;
+    transition: border-color 0.3s;
+}
+.live-card:nth-child(even) {
+    margin-top: 3rem; /* asimetría controlada */
+}
+.live-card:hover,
+.live-card.playing {
+    border-color: var(--text-main);
+}
+
+.live-card video {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: grayscale(100%) contrast(1.1);
+    transition: filter 0.5s;
+}
+.live-card:hover video,
+.live-card.playing video {
+    filter: grayscale(0%);
+}
+
+.live-play {
+    position: absolute;
+    left: 1rem;
+    bottom: 1rem;
+    background: transparent;
+    border: none;
+    color: var(--text-main);
+    font-family: var(--font-display);
+    font-size: 0.85rem;
+    letter-spacing: 0.12em;
+    text-shadow: 0 0 10px rgba(0, 0, 0, 0.9);
+    cursor: none;
+    transition: opacity 0.3s, transform 0.3s;
+}
+.live-card:hover .live-play {
+    transform: scale(1.1);
+}
+.live-card.playing .live-play {
+    opacity: 0;
+}
+.live-card.playing:hover .live-play {
+    opacity: 1;
+}
+
+.live-nav {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    margin-top: 3rem;
+}
+
+@media (max-width: 1024px) {
+    .live-section {
+        padding: 6rem 0 5rem 0;
+    }
+    .live-header,
+    .live-strip {
+        padding-left: 5vw;
+        padding-right: 5vw;
+    }
+    .live-strip {
+        scroll-padding-inline: 5vw;
+    }
+    .live-card {
+        flex-basis: min(62vw, 260px);
+    }
+    .live-card:nth-child(even) {
+        margin-top: 0;
+    }
+    .live-nav {
+        display: none; /* en móvil se desliza con el dedo */
+    }
+}
+
 @media (hover: none) and (pointer: coarse) {
     html, body, *, a, button, .track, .play-btn {
         cursor: auto !important;

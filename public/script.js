@@ -22,7 +22,10 @@ const translations = {
         review_form_send: "PUBLICAR",
         review_success: "RESEÑA PUBLICADA.",
         review_error_empty: "COMPLETA TODOS LOS CAMPOS.",
-        review_toggle: "+ DEJAR RESEÑA"
+        review_toggle: "+ DEJAR RESEÑA",
+        nav_live: "DIRECTO",
+        live_label: "EN DIRECTO",
+        live_title: "SESIONES"
     },
     ca: {
         nav_home: "INICI",
@@ -47,7 +50,10 @@ const translations = {
         review_form_send: "PUBLICAR",
         review_success: "RESSENYA PUBLICADA.",
         review_error_empty: "COMPLETA TOTS ELS CAMPS.",
-        review_toggle: "+ DEIXAR RESSENYA"
+        review_toggle: "+ DEIXAR RESSENYA",
+        nav_live: "DIRECTE",
+        live_label: "EN DIRECTE",
+        live_title: "SESSIONS"
     },
     en: {
         nav_home: "HOME",
@@ -72,7 +78,10 @@ const translations = {
         review_form_send: "PUBLISH",
         review_success: "REVIEW PUBLISHED.",
         review_error_empty: "FILL IN ALL FIELDS.",
-        review_toggle: "+ LEAVE A REVIEW"
+        review_toggle: "+ LEAVE A REVIEW",
+        nav_live: "LIVE",
+        live_label: "LIVE",
+        live_title: "SESSIONS"
     },
     fr: {
         nav_home: "ACCUEIL",
@@ -97,7 +106,10 @@ const translations = {
         review_form_send: "PUBLIER",
         review_success: "AVIS PUBLIÉ.",
         review_error_empty: "REMPLISSEZ TOUS LES CHAMPS.",
-        review_toggle: "+ LAISSER UN AVIS"
+        review_toggle: "+ LAISSER UN AVIS",
+        nav_live: "LIVE",
+        live_label: "EN LIVE",
+        live_title: "SESSIONS"
     },
     pt: {
         nav_home: "INÍCIO",
@@ -122,7 +134,10 @@ const translations = {
         review_form_send: "PUBLICAR",
         review_success: "AVALIAÇÃO PUBLICADA.",
         review_error_empty: "PREENCHA TODOS OS CAMPOS.",
-        review_toggle: "+ DEIXAR AVALIAÇÃO"
+        review_toggle: "+ DEIXAR AVALIAÇÃO",
+        nav_live: "AO VIVO",
+        live_label: "AO VIVO",
+        live_title: "SESSÕES"
     },
     de: {
         nav_home: "STARTSEITE",
@@ -147,7 +162,10 @@ const translations = {
         review_form_send: "VERÖFFENTLICHEN",
         review_success: "BEWERTUNG VERÖFFENTLICHT.",
         review_error_empty: "ALLE FELDER AUSFÜLLEN.",
-        review_toggle: "+ BEWERTUNG SCHREIBEN"
+        review_toggle: "+ BEWERTUNG SCHREIBEN",
+        nav_live: "LIVE",
+        live_label: "LIVE",
+        live_title: "SESSIONS"
     }
 };
 
@@ -311,7 +329,82 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // ── Reviews: Carousel + Supabase + Form ──────────────────────────────────
+
+    // ── Live videos: un solo sonido a la vez (vídeo o remix) ─────────────────
+    const liveCards = document.querySelectorAll('.live-card');
+    const liveStrip = document.getElementById('live-strip');
+
+    const setLiveLabel = (card, playing) => {
+        const btn = card.querySelector('.live-play');
+        const label = playing ? '[ PAUSE ]' : '[ PLAY ]';
+        btn.textContent = label;
+        btn.setAttribute('data-text', label);
+        card.classList.toggle('playing', playing);
+    };
+
+    const pauseAllVideos = (except = null) => {
+        liveCards.forEach(card => {
+            const video = card.querySelector('video');
+            if (video !== except && !video.paused) video.pause();
+        });
+    };
+
+    const pauseAudioPlayer = () => {
+        if (audioPlayer.paused) return;
+        audioPlayer.pause();
+        if (currentTrack) {
+            const btn = currentTrack.querySelector('.play-btn');
+            btn.textContent = "[ PLAY ]";
+            btn.setAttribute('data-text', '[ PLAY ]');
+        }
+    };
+
+    liveCards.forEach(card => {
+        const video = card.querySelector('video');
+        card.addEventListener('click', () => {
+            if (video.paused) {
+                pauseAllVideos(video);
+                pauseAudioPlayer();
+                video.muted = false;
+                video.play().catch(() => {});
+            } else {
+                video.pause();
+            }
+        });
+        video.addEventListener('play',  () => setLiveLabel(card, true));
+        video.addEventListener('pause', () => setLiveLabel(card, false));
+        video.addEventListener('ended', () => { video.currentTime = 0; setLiveLabel(card, false); });
+        card.addEventListener('mouseenter', () => cursor.classList.add('active'));
+        card.addEventListener('mouseleave', () => cursor.classList.remove('active'));
+    });
+
+    // Si arranca un remix, se paran los vídeos
+    audioPlayer.addEventListener('play', () => pauseAllVideos());
+
+    // Un vídeo que sale de pantalla se pausa
+    if (liveCards.length) {
+        const liveObserver = new IntersectionObserver(entries => {
+            entries.forEach(entry => {
+                const video = entry.target.querySelector('video');
+                if (!entry.isIntersecting && !video.paused) video.pause();
+            });
+        }, { threshold: 0.25 });
+        liveCards.forEach(card => liveObserver.observe(card));
+    }
+
+    const livePrev = document.getElementById('live-prev');
+    const liveNext = document.getElementById('live-next');
+    if (liveStrip && livePrev && liveNext) {
+        const liveStep = () => {
+            const card = liveStrip.querySelector('.live-card');
+            const gap  = parseFloat(getComputedStyle(liveStrip).columnGap) || 32;
+            return card ? card.getBoundingClientRect().width + gap : 300;
+        };
+        livePrev.addEventListener('click', () => liveStrip.scrollBy({ left: -liveStep(), behavior: 'smooth' }));
+        liveNext.addEventListener('click', () => liveStrip.scrollBy({ left:  liveStep(), behavior: 'smooth' }));
+    }
+
+    // ── Reviews: Carousel + D1 + Form ──────────────────────────────────
     const reviewsTrack   = document.getElementById('reviews-track');
     const revPrev        = document.getElementById('rev-prev');
     const revNext        = document.getElementById('rev-next');
