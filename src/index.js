@@ -170,14 +170,22 @@ async function sendContact(req, env, cors) {
         return json({ success: false, message: 'Server configuration error.' }, 500, cors);
     }
 
-    const formData = new FormData();
-    formData.append('access_key', env.WEB3FORMS_ACCESS_KEY);
-    formData.append('name', name);
-    formData.append('email', email);
-    formData.append('message', message);
+    // El plan gratuito de Web3Forms solo admite envíos "desde el navegador": reenviamos
+    // las cabeceras reales del visitante (Origin, Referer, User-Agent) para que lo acepte.
+    const headers = { 'Content-Type': 'application/json', Accept: 'application/json' };
+    for (const h of ['Origin', 'Referer', 'User-Agent']) {
+        const v = req.headers.get(h);
+        if (v) headers[h] = v;
+    }
+    if (!headers.Referer && headers.Origin) headers.Referer = headers.Origin + '/';
 
-    const res = await fetch('https://api.web3forms.com/submit', { method: 'POST', body: formData });
+    const res = await fetch('https://api.web3forms.com/submit', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ access_key: env.WEB3FORMS_ACCESS_KEY, name, email, message }),
+    });
     const result = await res.json().catch(() => ({}));
+    if (!result.success) console.error('Web3Forms:', res.status, result.message);
     if (result.success) return json({ success: true, message: 'Email sent successfully.' }, 200, cors);
     return json({ success: false, message: result.message || 'Error sending email.' }, 400, cors);
 }
