@@ -1,3 +1,6 @@
+// Web3Forms: clave pública por diseño (identifica el buzón de destino, no da acceso a nada).
+const WEB3FORMS_ACCESS_KEY = "a539ce66-878c-4810-8855-4fe278b7ad05";
+
 const translations = {
     es: {
         nav_home: "INICIO",
@@ -648,17 +651,21 @@ document.addEventListener("DOMContentLoaded", () => {
                 return;
             }
             
-            // Send data securely to local Serverless Function
-            fetch("/api/contact", {
+            // Envío directo a Web3Forms desde el navegador (su uso previsto: la access key
+            // es pública por diseño y el límite de envíos se aplica por IP del visitante).
+            // FormData sin cabeceras propias = petición "simple": el navegador no hace
+            // preflight OPTIONS, que el firewall de Web3Forms rechaza.
+            const payload = new FormData();
+            payload.append("access_key", WEB3FORMS_ACCESS_KEY);
+            payload.append("subject", "Nuevo contacto desde djramos.es");
+            payload.append("from_name", "DJ RAMOS web");
+            payload.append("name", sanitizedName);
+            payload.append("email", sanitizedEmail);
+            payload.append("message", sanitizedMessage);
+            payload.append("botcheck", document.getElementById("contact-botcheck")?.checked ? "on" : "");
+            fetch("https://api.web3forms.com/submit", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    name: sanitizedName,
-                    email: sanitizedEmail,
-                    message: sanitizedMessage
-                })
+                body: payload
             }).then(response => response.json())
               .then(json => {
                   if (json.success) {

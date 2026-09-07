@@ -2,8 +2,8 @@
 // Sirve la web estática de public/ y toda la API bajo /api/*:
 //   GET  /api/reviews  → últimas 50 reseñas
 //   POST /api/reviews  → nueva reseña (anti-spam + límite por IP)
-//   POST /api/contact  → reenvía el formulario de contacto a Web3Forms
-// Misma lógica que las antiguas funciones de Vercel (api/), sin Supabase.
+// El formulario de contacto habla directamente con Web3Forms desde el navegador
+// (Web3Forms limita por IP y las IPs de salida de Workers son compartidas).
 
 const URL_PATTERN = /https?:\/\/|www\.|\.com|\.net|\.org|\.ru|\.cn|bit\.ly|tinyurl/i;
 const REPEAT_PATTERN = /(.)\1{6,}/;
@@ -147,49 +147,6 @@ async function createReview(req, env, cors) {
     return json({ success: true, data: row }, 201, cors);
 }
 
-// ── /api/contact ─────────────────────────────────────────────────────────────
-
-async function sendContact(req, env, cors) {
-    const { name, email, message } = await readBody(req);
-
-    if (
-        typeof name !== 'string' || typeof email !== 'string' || typeof message !== 'string' ||
-        !name || !email || !message
-    ) {
-        return json({ success: false, message: 'All fields are required.' }, 400, cors);
-    }
-    if (name.length > 80 || email.length > 100 || message.length > 1000) {
-        return json({ success: false, message: 'Input too long.' }, 400, cors);
-    }
-    if (URL_PATTERN.test(message) || URL_PATTERN.test(name)) {
-        return json({ success: false, message: 'Links are not allowed.' }, 400, cors);
-    }
-
-    if (!env.WEB3FORMS_ACCESS_KEY) {
-        console.error('Falta el secreto WEB3FORMS_ACCESS_KEY (wrangler secret put WEB3FORMS_ACCESS_KEY).');
-        return json({ success: false, message: 'Server configuration error.' }, 500, cors);
-    }
-
-    // El plan gratuito de Web3Forms solo admite envíos "desde el navegador": reenviamos
-    // las cabeceras reales del visitante (Origin, Referer, User-Agent) para que lo acepte.
-    const headers = { 'Content-Type': 'application/json', Accept: 'application/json' };
-    for (const h of ['Origin', 'Referer', 'User-Agent']) {
-        const v = req.headers.get(h);
-        if (v) headers[h] = v;
-    }
-    if (!headers.Referer && headers.Origin) headers.Referer = headers.Origin + '/';
-
-    const res = await fetch('https://api.web3forms.com/submit', {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({ access_key: env.WEB3FORMS_ACCESS_KEY, name, email, message }),
-    });
-    const result = await res.json().catch(() => ({}));
-    if (!result.success) console.error('Web3Forms:', res.status, result.message);
-    if (result.success) return json({ success: true, message: 'Email sent successfully.' }, 200, cors);
-    return json({ success: false, message: result.message || 'Error sending email.' }, 400, cors);
-}
-
 // ── Router ───────────────────────────────────────────────────────────────────
 
 export default {
@@ -208,7 +165,7 @@ export default {
         if (!ok) return json({ success: false, message: 'Forbidden' }, 403);
 
         const route = url.pathname.replace(/\/+$/, '');
-        const methods = route === '/api/reviews' ? 'GET, POST, OPTIONS' : 'POST, OPTIONS';
+        const methods = 'GET, POST, OPTIONS';
         const cors = corsHeaders(origin, methods);
 
         if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors });
@@ -217,10 +174,6 @@ export default {
             if (route === '/api/reviews') {
                 if (req.method === 'GET') return await listReviews(env, cors);
                 if (req.method === 'POST') return await createReview(req, env, cors);
-                return json({ success: false, message: 'Method Not Allowed' }, 405, cors);
-            }
-            if (route === '/api/contact') {
-                if (req.method === 'POST') return await sendContact(req, env, cors);
                 return json({ success: false, message: 'Method Not Allowed' }, 405, cors);
             }
             return json({ success: false, message: 'Not found' }, 404, cors);

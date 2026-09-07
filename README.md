@@ -5,7 +5,7 @@
     <strong>A high-performance, brutalist-inspired portfolio built with Vanilla JS, CSS3 and Cloudflare Workers.</strong>
   </p>
   <p>
-    <a href="https://djramos.pgl-dev.workers.dev">View Live Site</a>
+    <a href="https://djramos.es">View Live Site</a>
   </p>
 </div>
 
@@ -20,14 +20,14 @@ This project is a modern digital portfolio for **DJ RAMOS**, designed to break a
 - **Frontend:** HTML5, CSS3 (Grid/Flexbox, CSS Variables, Fluid Typography), Vanilla JavaScript (ES6+)
 - **Hosting + API:** a single **Cloudflare Worker** serves the static site (`public/`) and the `/api/*` endpoints (`src/index.js`)
 - **Database:** **Cloudflare D1** (SQLite) for client reviews, with anti-spam checks and per-IP rate limiting
-- **Form Handling:** Web3Forms API, proxied through the Worker so the access key never reaches the browser
+- **Form Handling:** Web3Forms API, called from the browser (the access key is public by design; Web3Forms rate-limits per visitor IP)
 - **Cost:** everything runs on Cloudflare's free tier, always on, no cold "paused database" issues
 
 ## 🗂️ Structure
 
 ```
 public/          static site (index.html, script.js, style.css, media/, _headers)
-src/index.js     Worker: /api/reviews (GET, POST) and /api/contact (POST)
+src/index.js     Worker: /api/reviews (GET, POST)
 schema.sql       D1 schema (idempotent)
 wrangler.jsonc   Worker + assets + D1 configuration
 ```
@@ -37,7 +37,6 @@ wrangler.jsonc   Worker + assets + D1 configuration
 ```bash
 npm install
 npm run db:local                       # create the local D1 database (first time only)
-cp .dev.vars.example .dev.vars         # fill in WEB3FORMS_ACCESS_KEY for the contact form
 npm run dev                            # http://127.0.0.1:8787
 ```
 
@@ -45,7 +44,6 @@ npm run dev                            # http://127.0.0.1:8787
 
 ```bash
 npm run db:remote                                  # first time only: create the reviews table
-npx wrangler secret put WEB3FORMS_ACCESS_KEY       # first time only
 npm run deploy
 ```
 

@@ -196,6 +196,8 @@
             <h2 class="massive-title hover-distortion" data-i18n="contact_title">CONTACTO</h2>
             <div class="contact-form-container reveal-text">
                 <form id="contact-form" class="brutalist-form" novalidate>
+                    <!-- Honeypot de Web3Forms: oculto para humanos, los bots lo marcan -->
+                    <input type="checkbox" id="contact-botcheck" name="botcheck" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px;opacity:0;pointer-events:none;" aria-hidden="true">
                     <div class="form-group">
                         <input type="text" id="name" data-i18n-placeholder="contact_name" placeholder="NOMBRE" required>
                     </div>
