@@ -5,7 +5,7 @@
     <strong>A high-performance, brutalist-inspired portfolio built with Vanilla JS, CSS3 and Cloudflare Workers.</strong>
   </p>
   <p>
-    <a href="https://djramos.pablo-mdm.workers.dev">View Live Site</a>
+    <a href="https://djramos.pgl-dev.workers.dev">View Live Site</a>
   </p>
 </div>
 
