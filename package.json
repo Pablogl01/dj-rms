@@ -1,0 +1,14 @@
+{
+  "name": "dj-rms",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "db:local": "wrangler d1 execute djramos --local --file=schema.sql",
+    "db:remote": "wrangler d1 execute djramos --remote --file=schema.sql"
+  },
+  "devDependencies": {
+    "wrangler": "^4.129.0"
+  }
+}

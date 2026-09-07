@@ -15,7 +15,14 @@ const translations = {
         contact_send: "ENVIAR",
         error_email: "CORREO INVÁLIDO.",
         error_empty: "CAMPOS INCOMPLETOS.",
-        success_send: "SOLICITUD ENVIADA."
+        success_send: "SOLICITUD ENVIADA.",
+        nav_reviews: "RESEÑAS",
+        reviews_label: "RESEÑAS",
+        reviews_title: "VOCES",
+        review_form_send: "PUBLICAR",
+        review_success: "RESEÑA PUBLICADA.",
+        review_error_empty: "COMPLETA TODOS LOS CAMPOS.",
+        review_toggle: "+ DEJAR RESEÑA"
     },
     ca: {
         nav_home: "INICI",
@@ -33,7 +40,14 @@ const translations = {
         contact_send: "ENVIAR",
         error_email: "CORREU INVÀLID.",
         error_empty: "CAMPS INCOMPLETS.",
-        success_send: "SOL·LICITUD ENVIADA."
+        success_send: "SOL·LICITUD ENVIADA.",
+        nav_reviews: "RESSENYES",
+        reviews_label: "RESSENYES",
+        reviews_title: "VEUS",
+        review_form_send: "PUBLICAR",
+        review_success: "RESSENYA PUBLICADA.",
+        review_error_empty: "COMPLETA TOTS ELS CAMPS.",
+        review_toggle: "+ DEIXAR RESSENYA"
     },
     en: {
         nav_home: "HOME",
@@ -51,7 +65,14 @@ const translations = {
         contact_send: "SEND",
         error_email: "INVALID EMAIL.",
         error_empty: "INCOMPLETE FIELDS.",
-        success_send: "REQUEST SENT."
+        success_send: "REQUEST SENT.",
+        nav_reviews: "REVIEWS",
+        reviews_label: "REVIEWS",
+        reviews_title: "VOICES",
+        review_form_send: "PUBLISH",
+        review_success: "REVIEW PUBLISHED.",
+        review_error_empty: "FILL IN ALL FIELDS.",
+        review_toggle: "+ LEAVE A REVIEW"
     },
     fr: {
         nav_home: "ACCUEIL",
@@ -69,7 +90,14 @@ const translations = {
         contact_send: "ENVOYER",
         error_email: "E-MAIL INVALIDE.",
         error_empty: "CHAMPS INCOMPLETS.",
-        success_send: "DEMANDE ENVOYÉE."
+        success_send: "DEMANDE ENVOYÉE.",
+        nav_reviews: "AVIS",
+        reviews_label: "AVIS",
+        reviews_title: "VOIX",
+        review_form_send: "PUBLIER",
+        review_success: "AVIS PUBLIÉ.",
+        review_error_empty: "REMPLISSEZ TOUS LES CHAMPS.",
+        review_toggle: "+ LAISSER UN AVIS"
     },
     pt: {
         nav_home: "INÍCIO",
@@ -87,7 +115,14 @@ const translations = {
         contact_send: "ENVIAR",
         error_email: "E-MAIL INVÁLIDO.",
         error_empty: "CAMPOS INCOMPLETOS.",
-        success_send: "SOLICITAÇÃO ENVIADA."
+        success_send: "SOLICITAÇÃO ENVIADA.",
+        nav_reviews: "AVALIAÇÕES",
+        reviews_label: "AVALIAÇÕES",
+        reviews_title: "VOZES",
+        review_form_send: "PUBLICAR",
+        review_success: "AVALIAÇÃO PUBLICADA.",
+        review_error_empty: "PREENCHA TODOS OS CAMPOS.",
+        review_toggle: "+ DEIXAR AVALIAÇÃO"
     },
     de: {
         nav_home: "STARTSEITE",
@@ -105,7 +140,14 @@ const translations = {
         contact_send: "SENDEN",
         error_email: "UNGÜLTIGE E-MAIL.",
         error_empty: "UNVOLLSTÄNDIGE FELDER.",
-        success_send: "ANFRAGE GESENDET."
+        success_send: "ANFRAGE GESENDET.",
+        nav_reviews: "BEWERTUNGEN",
+        reviews_label: "BEWERTUNGEN",
+        reviews_title: "STIMMEN",
+        review_form_send: "VERÖFFENTLICHEN",
+        review_success: "BEWERTUNG VERÖFFENTLICHT.",
+        review_error_empty: "ALLE FELDER AUSFÜLLEN.",
+        review_toggle: "+ BEWERTUNG SCHREIBEN"
     }
 };
 
@@ -209,21 +251,16 @@ document.addEventListener("DOMContentLoaded", () => {
         revealObserver.observe(el);
     });
 
-    // Simple Parallax
+    // Parallax on scroll (desktop only)
     const galleryItems = document.querySelectorAll(".gallery-item");
+    const isMobile = () => window.innerWidth <= 1024;
     window.addEventListener("scroll", () => {
-        if (window.innerWidth <= 1024) {
-            galleryItems.forEach(item => {
-                item.style.transform = 'none';
-            });
-            return;
-        }
+        if (isMobile()) return;
         galleryItems.forEach((item, index) => {
             const speed = 0.1 * (index + 1);
-            const yPos = -(window.scrollY * speed);
-            item.style.transform = `translateY(${yPos}px)`;
+            item.style.transform = `translateY(${-(window.scrollY * speed)}px)`;
         });
-    });
+    }, { passive: true });
 
     // Audio Player Logic
     const audioPlayer = new Audio();
@@ -237,7 +274,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             if (currentTrack === track) {
                 if (audioPlayer.paused) {
-                    audioPlayer.play().catch(e => console.log("Audio no encontrado (Placeholder):", src));
+                    audioPlayer.play().catch(() => {});
                     btn.textContent = "[ PAUSE ]";
                     btn.setAttribute('data-text', '[ PAUSE ]');
                 } else {
@@ -255,7 +292,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 });
 
                 audioPlayer.src = src;
-                audioPlayer.play().catch(e => console.log("Audio no encontrado (Placeholder):", src));
+                audioPlayer.play().catch(() => {});
                 btn.textContent = "[ PAUSE ]";
                 btn.setAttribute('data-text', '[ PAUSE ]');
                 track.classList.add('playing');
@@ -273,6 +310,210 @@ document.addEventListener("DOMContentLoaded", () => {
             currentTrack = null;
         }
     });
+
+    // ── Reviews: Carousel + Supabase + Form ──────────────────────────────────
+    const reviewsTrack   = document.getElementById('reviews-track');
+    const revPrev        = document.getElementById('rev-prev');
+    const revNext        = document.getElementById('rev-next');
+    const revDotsContainer = document.getElementById('rev-dots');
+    let revCurrentIndex  = 0;
+
+    // Sanitize helper (reused in form too)
+    const stripHTML = (str) => str.replace(/<[^>]*>/g, '').trim();
+
+    /** Build a review <article> card from a plain object */
+    function buildReviewCard(review) {
+        const card = document.createElement('article');
+        card.className = 'review-card';
+        card.innerHTML = `
+            <div class="review-quote">&ldquo;</div>
+            <blockquote class="review-text">${stripHTML(review.text)}</blockquote>
+            <footer class="review-footer">
+                <span class="review-author">— ${stripHTML(review.author).toUpperCase()}</span>
+                <span class="review-event">${stripHTML(review.event).toUpperCase()}</span>
+            </footer>`;
+        return card;
+    }
+
+    /** (Re-)initialize dots and reset position */
+    function initCarousel() {
+        revCurrentIndex = 0;
+        revDotsContainer.innerHTML = '';
+        reviewsTrack.style.transform = 'translateX(0)';
+
+        const cards = reviewsTrack.querySelectorAll('.review-card');
+        cards.forEach((_, i) => {
+            const dot = document.createElement('button');
+            dot.className = 'rev-dot' + (i === 0 ? ' active' : '');
+            dot.setAttribute('aria-label', `Reseña ${i + 1}`);
+            dot.addEventListener('click', () => goToReview(i));
+            dot.addEventListener('mouseenter', () => cursor.classList.add('active'));
+            dot.addEventListener('mouseleave', () => cursor.classList.remove('active'));
+            revDotsContainer.appendChild(dot);
+        });
+    }
+
+    function goToReview(index) {
+        const cards = reviewsTrack.querySelectorAll('.review-card');
+        if (!cards.length) return;
+        revCurrentIndex = Math.max(0, Math.min(index, cards.length - 1));
+        const style = window.getComputedStyle(reviewsTrack);
+        const gap   = parseFloat(style.columnGap) || parseFloat(style.gap) || 48;
+        const cardW = cards[0].getBoundingClientRect().width + gap;
+        reviewsTrack.style.transform = `translateX(-${revCurrentIndex * cardW}px)`;
+        revDotsContainer.querySelectorAll('.rev-dot').forEach((d, i) =>
+            d.classList.toggle('active', i === revCurrentIndex));
+    }
+
+    /** Fetch reviews from Supabase via our API and replace the hardcoded cards */
+    async function loadReviews() {
+        try {
+            const res  = await fetch('/api/reviews');
+            if (!res.ok) return;
+            const data = await res.json();
+            if (!Array.isArray(data) || data.length === 0) return;
+
+            reviewsTrack.innerHTML = '';
+            data.forEach(r => reviewsTrack.appendChild(buildReviewCard(r)));
+            initCarousel();
+            // Trigger reveal on newly added cards
+            reviewsTrack.querySelectorAll('.review-card').forEach(el => {
+                el.classList.add('visible');
+            });
+        } catch (e) {
+            console.warn('Using fallback reviews:', e);
+        }
+    }
+
+    if (reviewsTrack && revPrev && revNext) {
+        initCarousel();
+        loadReviews();
+
+        revPrev.addEventListener('click', () => goToReview(revCurrentIndex - 1));
+        revNext.addEventListener('click', () => goToReview(revCurrentIndex + 1));
+
+        // Touch / swipe
+        let touchStartX = 0;
+        reviewsTrack.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; }, { passive: true });
+        reviewsTrack.addEventListener('touchend', e => {
+            const delta = touchStartX - e.changedTouches[0].clientX;
+            if (Math.abs(delta) > 50) goToReview(revCurrentIndex + (delta > 0 ? 1 : -1));
+        }, { passive: true });
+
+        [revPrev, revNext].forEach(btn => {
+            btn.addEventListener('mouseenter', () => cursor.classList.add('active'));
+            btn.addEventListener('mouseleave', () => cursor.classList.remove('active'));
+        });
+    }
+
+    // Review form toggle
+    const reviewToggleBtn   = document.getElementById('reviews-toggle-btn');
+    const reviewFormContainer = document.getElementById('review-form-container');
+    if (reviewToggleBtn && reviewFormContainer) {
+        reviewToggleBtn.addEventListener('click', () => {
+            const isOpen = reviewFormContainer.classList.toggle('open');
+            reviewToggleBtn.classList.toggle('open', isOpen);
+            reviewFormContainer.setAttribute('aria-hidden', String(!isOpen));
+            // Swap button label
+            const lang = translations[activeLangKey];
+            const label = isOpen
+                ? lang.review_toggle.replace(/^[+−–-]\s*/, '− ')
+                : lang.review_toggle;
+            reviewToggleBtn.textContent = label;
+            reviewToggleBtn.setAttribute('data-text', label);
+            // Set timestamp when form opens (for bot timing check)
+            if (isOpen) {
+                const tsField = document.getElementById('review-ts');
+                if (tsField) tsField.value = Date.now();
+                reviewFormContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        });
+        // Cursor effect
+        reviewToggleBtn.addEventListener('mouseenter', () => cursor.classList.add('active'));
+        reviewToggleBtn.addEventListener('mouseleave', () => cursor.classList.remove('active'));
+    }
+
+    const reviewForm    = document.getElementById('review-form');
+    const reviewSubmit  = document.getElementById('review-submit');
+    const reviewAuthor  = document.getElementById('review-author');
+    const reviewEvent   = document.getElementById('review-event');
+    const reviewText    = document.getElementById('review-text');
+    const reviewFeedback = document.getElementById('review-feedback');
+    const reviewHp      = document.getElementById('review-hp');
+    const reviewTs      = document.getElementById('review-ts');
+    if (reviewForm) {
+        reviewForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const authorVal = reviewAuthor.value.trim();
+            const eventVal  = reviewEvent.value.trim();
+            const textVal   = reviewText.value.trim();
+            const feedback  = reviewFeedback;
+
+            feedback.className   = 'form-feedback';
+            feedback.textContent = '';
+
+            if (!authorVal || !eventVal || !textVal) {
+                feedback.textContent = translations[activeLangKey].review_error_empty;
+                feedback.classList.add('error');
+                return;
+            }
+
+            // Disable submit while sending
+            reviewSubmit.disabled     = true;
+            reviewSubmit.textContent  = '...';
+
+            try {
+                const res = await fetch('/api/reviews', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        author: authorVal,
+                        event:  eventVal,
+                        text:   textVal,
+                        _hp:    reviewHp?.value || '',
+                        _ts:    reviewTs?.value || ''
+                    })
+                });
+                const json = await res.json();
+
+                if (!res.ok || !json.success) throw new Error(json.message || 'Error');
+
+                feedback.textContent = translations[activeLangKey].review_success;
+                feedback.classList.add('success');
+                reviewForm.reset();
+
+                // Close the form
+                if (reviewFormContainer && reviewToggleBtn) {
+                    reviewFormContainer.classList.remove('open');
+                    reviewFormContainer.setAttribute('aria-hidden', 'true');
+                    reviewToggleBtn.classList.remove('open');
+                    const baseLabel = translations[activeLangKey].review_toggle;
+                    reviewToggleBtn.textContent = baseLabel;
+                    reviewToggleBtn.setAttribute('data-text', baseLabel);
+                }
+
+                // Prepend new card to the carousel
+                const newCard = buildReviewCard(json.data || { author: authorVal, event: eventVal, text: textVal });
+                newCard.classList.add('visible');
+                reviewsTrack.insertBefore(newCard, reviewsTrack.firstChild);
+                initCarousel();
+                goToReview(0);
+
+            } catch (err) {
+                feedback.textContent = err.message || 'ERROR.';
+                feedback.classList.add('error');
+            } finally {
+                reviewSubmit.disabled    = false;
+                const sendLabel = translations[activeLangKey].review_form_send;
+                reviewSubmit.textContent = sendLabel;
+                reviewSubmit.setAttribute('data-text', sendLabel);
+                setTimeout(() => {
+                    feedback.textContent  = '';
+                    feedback.className    = 'form-feedback';
+                }, 4000);
+            }
+        });
+    }
 
     // Form Security & Validation
     const contactForm = document.getElementById("contact-form");

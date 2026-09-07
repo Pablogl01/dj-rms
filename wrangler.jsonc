@@ -1,0 +1,25 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "djramos",
+  "main": "src/index.js",
+  "compatibility_date": "2026-09-01",
+  "observability": { "enabled": true },
+  // Sirve public/ tal cual; /api/* pasa siempre por el worker.
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "run_worker_first": ["/api/*"]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "djramos",
+      "database_id": "78e90cb1-165c-424d-a45a-99cff6a41277"
+    }
+  ],
+  "vars": {
+    // Orígenes extra admitidos además del propio (dominio personalizado).
+    "ALLOWED_ORIGINS": "https://djramos.com,https://www.djramos.com"
+  }
+  // Secretos (wrangler secret put): WEB3FORMS_ACCESS_KEY
+}

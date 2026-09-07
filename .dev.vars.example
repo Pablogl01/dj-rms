@@ -1,0 +1,3 @@
+# Copia a .dev.vars (gitignored) para desarrollo local con `npm run dev`.
+# En producción: npx wrangler secret put WEB3FORMS_ACCESS_KEY
+WEB3FORMS_ACCESS_KEY=

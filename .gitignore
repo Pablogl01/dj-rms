@@ -1,3 +1,8 @@
-config.js
-
+node_modules
+.wrangler/
+.dev.vars*
+!.dev.vars.example
+.env
+.env.local
 .vercel
+config.js
