@@ -19,7 +19,7 @@
   ],
   "vars": {
     // Orígenes extra admitidos además del propio (dominio personalizado).
-    "ALLOWED_ORIGINS": "https://djramos.com,https://www.djramos.com"
+    "ALLOWED_ORIGINS": "https://djramos.es,https://www.djramos.es"
   }
   // Secretos (wrangler secret put): WEB3FORMS_ACCESS_KEY
 }
