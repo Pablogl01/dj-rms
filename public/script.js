@@ -570,9 +570,11 @@ document.addEventListener("DOMContentLoaded", () => {
                         _ts:    reviewTs?.value || ''
                     })
                 });
-                const json = await res.json();
+                // Si la respuesta no es JSON (p. ej. una página de error), res.json() lanza
+                // excepciones técnicas ("The string did not match the expected pattern." en Safari).
+                const json = await res.json().catch(() => ({}));
 
-                if (!res.ok || !json.success) throw new Error(json.message || 'Error');
+                if (!res.ok || !json.success) throw new Error(json.message || 'ERROR.');
 
                 feedback.textContent = translations[activeLangKey].review_success;
                 feedback.classList.add('success');

@@ -1,0 +1,18 @@
+# Netlify sirve la web estática (fuera de las IPs de Cloudflare que LaLiga bloquea
+# durante los partidos). Sin paso de build: se publica public/ tal cual.
+# Cabeceras de seguridad: public/_headers (misma sintaxis en Netlify).
+[build]
+  publish = "public"
+  command = ""
+
+# La API sigue en el Worker de Cloudflare (D1). Netlify la reenvía desde sus servidores,
+# así que el navegador solo habla con djramos.es: mismo origen, sin CORS, y los
+# bloqueos de los operadores españoles no afectan al tramo Netlify → Worker.
+# `signed` añade la cabecera x-nf-sign (JWT firmado con la variable de entorno
+# NETLIFY_PROXY_SECRET); el Worker la comprueba antes de fiarse de la IP del visitante.
+[[redirects]]
+  from = "/api/*"
+  to = "https://djramos.pgl-dev.workers.dev/api/:splat"
+  status = 200
+  force = true
+  signed = "NETLIFY_PROXY_SECRET"

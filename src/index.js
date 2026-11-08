@@ -1,5 +1,7 @@
 // Cloudflare Worker + D1 (plan gratuito, siempre encendido).
-// Sirve la web estática de public/ y toda la API bajo /api/*:
+// En producción la web la sirve Netlify en djramos.es y reenvía /api/* aquí (netlify.toml);
+// el Worker sigue sirviendo también public/ en workers.dev y en local (npm run dev).
+// API bajo /api/*:
 //   GET  /api/reviews  → últimas 50 reseñas
 //   POST /api/reviews  → nueva reseña (anti-spam + límite por IP)
 // El formulario de contacto habla directamente con Web3Forms desde el navegador
@@ -64,12 +66,54 @@ async function readBody(req) {
     }
 }
 
-function clientIP(req) {
-    return (
-        req.headers.get('CF-Connecting-IP') ||
-        req.headers.get('X-Forwarded-For')?.split(',')[0].trim() ||
-        'unknown'
-    );
+const b64urlToBytes = (s) =>
+    Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/')), (c) => c.charCodeAt(0));
+
+/**
+ * ¿Viene la petición del proxy de Netlify (netlify.toml, `signed`)? Netlify añade
+ * x-nf-sign: un JWT HS256 firmado con NETLIFY_PROXY_SECRET (secreto del Worker y
+ * variable de entorno en Netlify con el mismo valor).
+ */
+async function isSignedByNetlify(req, env) {
+    const token = req.headers.get('x-nf-sign');
+    if (!token || !env.NETLIFY_PROXY_SECRET) return false;
+    const [header, payload, signature] = token.split('.');
+    if (!signature) return false;
+    try {
+        const key = await crypto.subtle.importKey(
+            'raw',
+            new TextEncoder().encode(env.NETLIFY_PROXY_SECRET),
+            { name: 'HMAC', hash: 'SHA-256' },
+            false,
+            ['verify']
+        );
+        const valid = await crypto.subtle.verify(
+            'HMAC',
+            key,
+            b64urlToBytes(signature),
+            new TextEncoder().encode(`${header}.${payload}`)
+        );
+        if (!valid) return false;
+        const claims = JSON.parse(new TextDecoder().decode(b64urlToBytes(payload)));
+        if (claims.iss !== 'netlify') return false;
+        if (claims.exp && claims.exp * 1000 < Date.now()) return false;
+        return true;
+    } catch {
+        return false;
+    }
+}
+
+/**
+ * IP del visitante. Detrás del proxy de Netlify, CF-Connecting-IP es la IP de Netlify;
+ * la del visitante va en x-nf-client-connection-ip, que solo se acepta si la petición
+ * está firmada (si no, cualquiera podría inventársela llamando directamente a workers.dev).
+ */
+async function clientIP(req, env) {
+    if (await isSignedByNetlify(req, env)) {
+        const viaNetlify = req.headers.get('x-nf-client-connection-ip');
+        if (viaNetlify) return viaNetlify.trim();
+    }
+    return req.headers.get('CF-Connecting-IP') || 'unknown';
 }
 
 // ── /api/reviews ─────────────────────────────────────────────────────────────
@@ -118,7 +162,7 @@ async function createReview(req, env, cors) {
     if (REPEAT_PATTERN.test(text)) return json({ success: false, message: 'Invalid content.' }, 400, cors);
 
     // 8. Límite: 3 reseñas por IP y hora
-    const ip = clientIP(req);
+    const ip = await clientIP(req, env);
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
     const recent = await env.DB
         .prepare('SELECT COUNT(*) AS n FROM reviews WHERE ip_address = ? AND created_at >= ?')
@@ -153,9 +197,12 @@ export default {
     async fetch(req, env) {
         const url = new URL(req.url);
 
-        // www.djramos.es → djramos.es (una sola URL canónica)
-        if (url.hostname.startsWith('www.')) {
-            url.hostname = url.hostname.slice(4);
+        // Una sola URL canónica: siempre https y sin www. Ambas correcciones en un solo salto.
+        const forceHttps = url.protocol === 'http:' && url.hostname !== 'localhost' && url.hostname !== '127.0.0.1';
+        const stripWww = url.hostname.startsWith('www.');
+        if (forceHttps || stripWww) {
+            if (forceHttps) url.protocol = 'https:';
+            if (stripWww) url.hostname = url.hostname.slice(4);
             return Response.redirect(url.toString(), 301);
         }
 
